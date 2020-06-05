@@ -22,6 +22,10 @@ public class RAM extends PcComponent {
         this.latency = latency;
     }
 
+    public RAM() {
+        super();
+    }
+
     public RamType getType() {
         return type;
     }

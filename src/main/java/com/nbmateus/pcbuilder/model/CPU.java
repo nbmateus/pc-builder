@@ -28,6 +28,10 @@ public class CPU extends ProcessingUnit {
         this.hasIntegratedGPU = hasIntegratedGPU;
     }
 
+    public CPU() {
+        super();
+    }    
+
     public int getCores() {
         return cores;
     }
@@ -79,7 +83,7 @@ public class CPU extends ProcessingUnit {
     @Override
     public String toString() {
         return "CPU [id=" + getId() + ", maker=" + getMaker() + ", maxPrice=" + getMaxPrice() + ", minPrice=" + getMinPrice()
-        + ", name=" + getName() + "baseClock=" + getBaseClock() + ", boostClock=" + getBoostClock() + ", tdp=" + getTdp() + "cores=" + cores + ", hasIntegratedGPU=" + hasIntegratedGPU + ", includesCooler=" + includesCooler
+        + ", name=" + getName() + ", baseClock=" + getBaseClock() + ", boostClock=" + getBoostClock() + ", tdp=" + getTdp() + "cores=" + cores + ", hasIntegratedGPU=" + hasIntegratedGPU + ", includesCooler=" + includesCooler
                 + ", socket=" + socket + ", threads=" + threads + ", unlockedMultiplier=" + unlockedMultiplier + "]";
     }
 }

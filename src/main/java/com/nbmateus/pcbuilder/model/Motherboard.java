@@ -35,6 +35,10 @@ public class Motherboard extends PcComponent {
         this.sataSlots = sataSlots;
     }
 
+    public Motherboard() {
+        super();
+    }
+
     public MotherboardSize getSize() {
         return size;
     }

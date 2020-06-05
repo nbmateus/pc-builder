@@ -17,6 +17,10 @@ public class PSU extends PcComponent {
         this.wattage = wattage;
     }
 
+    public PSU() {
+        super();
+    }
+
     public PsuCertification getCertification() {
         return certification;
     }

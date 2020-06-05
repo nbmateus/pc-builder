@@ -17,6 +17,10 @@ public abstract class ProcessingUnit extends PcComponent{
         this.tdp = tdp;
     }
 
+    public ProcessingUnit(){
+        super();
+    }
+
     public float getBaseClock() {
         return baseClock;
     }

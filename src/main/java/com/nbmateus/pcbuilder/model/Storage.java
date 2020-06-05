@@ -22,6 +22,10 @@ public class Storage extends PcComponent {
         this.capacity = capacity;
     }
 
+    public Storage() {
+        super();
+    }
+
     public StorageType getStorageType() {
         return storageType;
     }

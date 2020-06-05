@@ -9,7 +9,7 @@ import javax.persistence.MappedSuperclass;
 public abstract class PcComponent {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     private String maker;
     private String name;
@@ -21,6 +21,10 @@ public abstract class PcComponent {
         this.name = name;
         this.minPrice = minPrice;
         this.maxPrice = maxPrice;
+    }
+
+    public PcComponent(){
+        super();
     }
 
     public long getId() {

@@ -15,6 +15,10 @@ public class Cooler extends PcComponent {
         this.noiseLevel = noiseLevel;
     }
 
+    public Cooler() {
+        super();
+    }
+
     public int getMaxCpuTDP() {
         return maxCpuTDP;
     }

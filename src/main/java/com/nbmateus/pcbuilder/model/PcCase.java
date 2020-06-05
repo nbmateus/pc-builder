@@ -5,19 +5,23 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 
 @Entity
-public class Case extends PcComponent {
+public class PcCase extends PcComponent {
 
     @Enumerated(EnumType.STRING)
     private MotherboardSize maxMoboSize;
     private int driveBays25;
     private int driveBays35;
 
-    public Case(String maker, String name, int minPrice, int maxPrice, MotherboardSize maxMoboSize, int driveBays25,
+    public PcCase(String maker, String name, int minPrice, int maxPrice, MotherboardSize maxMoboSize, int driveBays25,
             int driveBays35) {
         super(maker, name, minPrice, maxPrice);
         this.maxMoboSize = maxMoboSize;
         this.driveBays25 = driveBays25;
         this.driveBays35 = driveBays35;
+    }
+
+    public PcCase() {
+        super();
     }
 
     public MotherboardSize getMaxMoboSize() {

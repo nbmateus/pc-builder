@@ -41,14 +41,14 @@ public class PC {
     private Set<Storage> storage;
 
     @ManyToOne
-    private Case pcCase;
+    private PcCase pcCase;
 
     @ManyToOne
     private PSU psu;
 
     public PC(String name, String description, int totalMinPrice, int totalMaxPrice, int estimatedPrice,
             int recommendedPsuWattage, Motherboard motherboard, CPU cpu, GPU gpu, Cooler cpuCooler, RAM ram,
-            int ramUnits, Set<Storage> storage, Case pcCase, PSU psu) {
+            int ramUnits, Set<Storage> storage, PcCase pcCase, PSU psu) {
         this.name = name;
         this.description = description;
         this.totalMinPrice = totalMinPrice;
@@ -64,6 +64,10 @@ public class PC {
         this.storage = storage;
         this.pcCase = pcCase;
         this.psu = psu;
+    }
+
+    public PC() {
+        super();
     }
 
     public String getName() {
@@ -170,11 +174,11 @@ public class PC {
         this.storage = storage;
     }
 
-    public Case getPcCase() {
+    public PcCase getPcCase() {
         return pcCase;
     }
 
-    public void setPcCase(Case pcCase) {
+    public void setPcCase(PcCase pcCase) {
         this.pcCase = pcCase;
     }
 

@@ -21,6 +21,10 @@ public class GPU extends ProcessingUnit {
         this.vga = vga;
     }
 
+    public GPU() {
+        super();
+    }
+
     public int getMemory() {
         return memory;
     }
