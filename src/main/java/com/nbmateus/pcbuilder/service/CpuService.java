@@ -75,4 +75,8 @@ public class CpuService {
         cpuRepository.delete(cpuData.get());
     }
 
+    public Iterable<CPU> findByMaker(String maker) {
+        return cpuRepository.findByMaker(maker);
+    }
+
 }

@@ -8,6 +8,7 @@ import com.nbmateus.pcbuilder.service.GpuService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,6 +42,7 @@ public class GpuController {
         return new ResponseEntity<GPU>(gpu, httpStatus);
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping("/add")
     public void addGpu(@RequestBody GPU gpu, HttpServletResponse response) {
         try {
@@ -51,6 +53,7 @@ public class GpuController {
         }
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/{id}")
     public void updateGpu(@PathVariable("id") long id, @RequestBody GPU updatedGpu, HttpServletResponse response) {
         try {
@@ -65,6 +68,7 @@ public class GpuController {
         }
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteGpu(@PathVariable("id") long id, HttpServletResponse response) {
         try {

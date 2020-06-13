@@ -70,4 +70,8 @@ public class CoolerService {
         coolerRepository.delete(coolerData.get());
     }
 
+    public Iterable<Cooler> findByCpuTdp(int cpuTdp) {
+        return coolerRepository.findByCpuTdp(cpuTdp);
+    }
+
 }

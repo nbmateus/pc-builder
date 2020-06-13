@@ -8,6 +8,7 @@ import com.nbmateus.pcbuilder.service.CpuService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,6 +42,7 @@ public class CpuController {
         return new ResponseEntity<CPU>(cpu, httpStatus);
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping("/add")
     public void addCpu(@RequestBody CPU cpu, HttpServletResponse response) {
         try {
@@ -52,6 +54,7 @@ public class CpuController {
         }
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/{id}")
     public void updateCpu(@PathVariable("id") long id, @RequestBody CPU updatedCpu, HttpServletResponse response) {
         try {
@@ -66,6 +69,7 @@ public class CpuController {
         }
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteCpu(@PathVariable("id") long id, HttpServletResponse response) {
         try {
@@ -74,6 +78,11 @@ public class CpuController {
         } catch (Exception exception) {
             response.setStatus(HttpStatus.NOT_FOUND.value());
         }
+    }
+
+    @GetMapping("/made-by/{maker}")
+    public ResponseEntity<Iterable<CPU>> getCpuByMaker(@PathVariable("maker") String maker) {
+        return new ResponseEntity<Iterable<CPU>>(cpuService.findByMaker(maker), HttpStatus.OK);
     }
 
 }

@@ -12,4 +12,7 @@ public interface PsuRepository extends CrudRepository<PSU, Long> {
     
     @Query(value = "SELECT * FROM psu where psu.maker = :maker and psu.name = :name", nativeQuery = true)
     PSU findByMakerAndName(@Param("maker") String maker, @Param("name") String name);
+
+    @Query(value = "SELECT * FROM psu p WHERE p.wattage >= :power", nativeQuery = true)
+    Iterable<PSU> findByPowerRequired(@Param("power") int power);
 }

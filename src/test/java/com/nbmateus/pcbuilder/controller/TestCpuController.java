@@ -3,6 +3,8 @@ package com.nbmateus.pcbuilder.controller;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nbmateus.pcbuilder.dto.LoginForm;
+import com.nbmateus.pcbuilder.dto.MessageResponse;
 import com.nbmateus.pcbuilder.model.CPU;
 import com.nbmateus.pcbuilder.model.Socket;
 
@@ -24,104 +26,199 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 @SpringBootTest
 @TestPropertySource(locations = "classpath:test.properties")
 @Sql("/cpuData.sql")
+@Sql("/userData.sql")
 @AutoConfigureMockMvc
 public class TestCpuController {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @Test
-    public void testGetAll() throws Exception {
-        MvcResult mvcResult = mockMvc
-                .perform(MockMvcRequestBuilders.get("/cpu/all").accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+        @Test
+        public void testGetAll() throws Exception {
+                MvcResult mvcResult = mockMvc.perform(
+                                MockMvcRequestBuilders.get("/cpu/all").accept(MediaType.APPLICATION_JSON_VALUE))
+                                .andReturn();
 
-        CPU[] cpuList = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CPU[].class);
-        assertTrue(cpuList.length > 0 && mvcResult.getResponse().getStatus() == HttpStatus.OK.value());
-    }
+                CPU[] cpuList = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CPU[].class);
+                assertTrue(cpuList.length > 0 && mvcResult.getResponse().getStatus() == HttpStatus.OK.value());
+        }
 
-    @Test
-    public void testGetCpuByIdSuccessfully() throws Exception {
-        MvcResult mvcResult = mockMvc
-                .perform(MockMvcRequestBuilders.get("/cpu/3").accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+        @Test
+        public void testGetCpuByIdSuccessfully() throws Exception {
+                MvcResult mvcResult = mockMvc
+                                .perform(MockMvcRequestBuilders.get("/cpu/3").accept(MediaType.APPLICATION_JSON_VALUE))
+                                .andReturn();
 
-        CPU cpuId3 = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CPU.class);
+                CPU cpuId3 = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CPU.class);
 
-        assertTrue(cpuId3.getId() == 3);
-    }
+                assertTrue(cpuId3.getId() == 3);
+        }
 
-    @Test
-    public void testGetCpuByIdNotFound() throws Exception {
-        MvcResult mvcResult = mockMvc
-                .perform(MockMvcRequestBuilders.get("/cpu/9").accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+        @Test
+        public void testGetCpuByIdNotFound() throws Exception {
+                MvcResult mvcResult = mockMvc
+                                .perform(MockMvcRequestBuilders.get("/cpu/9").accept(MediaType.APPLICATION_JSON_VALUE))
+                                .andReturn();
 
-        System.out.println("\ntestGetCpuByIdNotFound: "+mvcResult.getResponse().getStatus()+"\n");
-        System.out.println("\ntestGetCpuByIdNotFound: "+mvcResult.getResponse().getContentAsString()+"\n");
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
-    }
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
+        }
 
-    @Test
-    public void testAddCpuSuccessfully() throws Exception {
-        CPU cpu = new CPU("makerTest5", "nameTest5", 1, 1, 1, 1, 1, 1, 1, Socket.LGA1200, false, false, false);
+        @Test
+        public void testAddCpuSuccessfully() throws Exception {
+                CPU cpu = new CPU("cpuMaker1", "nameTest5", 1, 1, 1, 1, 1, 1, 1, Socket.LGA1200, false, false, false);
 
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/cpu/add")
-                .contentType(MediaType.APPLICATION_JSON_VALUE).content(objectMapper.writeValueAsString(cpu)))
-                .andReturn();
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CREATED.value());
+                // add cpu
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/cpu/add")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(cpu))).andReturn();
 
-    }
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CREATED.value());
 
-    @Test
-    public void testAddCpuDuplicated() throws Exception {
-        CPU cpu = new CPU("makerTest2", "nameTest2", 2, 2, 2, 2, 2, 2, 2, Socket.FM2plus, true, true, true);
+        }
 
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/cpu/add")
-                .contentType(MediaType.APPLICATION_JSON_VALUE).content(objectMapper.writeValueAsString(cpu)))
-                .andReturn();
+        @Test
+        public void testAddCpuDuplicated() throws Exception {
+                CPU cpu = new CPU("cpuMaker1", "nameTest2", 2, 2, 2, 2, 2, 2, 2, Socket.FM2plus, true, true, true);
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CONFLICT.value());
-    }
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
 
-    @Test
-    public void testUpdateCpuSuccesfully() throws Exception {
+                // add cpu
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/cpu/add")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(cpu))).andReturn();
 
-        CPU cpuId4 = new CPU("makerTest4", "nameTest4", 2, 2, 1, 2, 1, 2, 2, Socket.AM4, true, false, true);
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/cpu/4").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(cpuId4))).andReturn();
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CONFLICT.value());
+        }
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.OK.value());
-    }
+        @Test
+        public void testUpdateCpuSuccesfully() throws Exception {
 
-    @Test
-    public void testUpdateCpuDuplicated() throws Exception {
+                CPU cpuId4 = new CPU("cpuMaker2", "nameTest4", 2, 2, 1, 2, 1, 2, 2, Socket.AM4, true, false, true);
 
-        CPU cpuId4 = new CPU("makerTest2", "nameTest2", 2, 2, 2, 2, 2, 2, 2, Socket.LGA1200, true, true, true);
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/cpu/4").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(cpuId4))).andReturn();
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CONFLICT.value());
-    }
+                // update cpu
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/cpu/4")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(cpuId4))).andReturn();
 
-    @Test
-    public void testUpdateCpuNotFound() throws Exception {
-        MvcResult mvcResult = mockMvc
-                .perform(MockMvcRequestBuilders.get("/cpu/8").accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.OK.value());
+        }
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
-    }
+        @Test
+        public void testUpdateCpuDuplicated() throws Exception {
 
-    @Test
-    public void testDeleteCpuSuccessfully() throws Exception {
-            MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/cpu/1")).andReturn();
-            assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NO_CONTENT.value());
-    }
+                CPU cpuId4 = new CPU("cpuMaker2", "nameTest3", 2, 2, 2, 2, 2, 2, 2, Socket.LGA1200, true, true, true);
 
-    @Test
-    public void testDeleteCpuNotFound() throws Exception {
-            MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/cpu/10")).andReturn();
-            assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
-    }
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
+
+                // update cpu
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/cpu/4")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(cpuId4))).andReturn();
+
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CONFLICT.value());
+        }
+
+        @Test
+        public void testUpdateCpuNotFound() throws Exception {
+
+                CPU cpu = new CPU("cpuMaker2", "nameTest4", 2, 2, 1, 2, 1, 2, 2, Socket.AM4, true, false, true);
+
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
+
+                // update cpu
+                mvcResult = mockMvc
+                                .perform(MockMvcRequestBuilders.put("/cpu/8").header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content(objectMapper.writeValueAsString(cpu)))
+                                .andReturn();
+
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
+        }
+
+        @Test
+        public void testDeleteCpuSuccessfully() throws Exception {
+
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
+
+                // delete cpu
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/cpu/1").header("Authorization", objectMapper
+                                .readValue(mvcResult.getResponse().getContentAsString(), MessageResponse.class)
+                                .getMessage())).andReturn();
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NO_CONTENT.value());
+        }
+
+        @Test
+        public void testDeleteCpuNotFound() throws Exception {
+
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
+
+                // delete cpu
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/cpu/10").header("Authorization",
+                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                MessageResponse.class).getMessage()))
+                                .andReturn();
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
+        }
+
+        @Test
+        public void getCpuListByMaker() throws Exception {
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.get("/cpu/made-by/cpuMaker2")
+                                .accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+
+                CPU[] cpuList = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CPU[].class);
+
+                assertTrue(cpuList.length == 2 && mvcResult.getResponse().getStatus() == HttpStatus.OK.value());
+                for (CPU cpu : cpuList) {
+                        assertTrue(cpu.getMaker().equals("cpuMaker2"));
+                }
+        }
 }

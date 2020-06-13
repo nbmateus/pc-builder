@@ -3,6 +3,8 @@ package com.nbmateus.pcbuilder.controller;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nbmateus.pcbuilder.dto.LoginForm;
+import com.nbmateus.pcbuilder.dto.MessageResponse;
 import com.nbmateus.pcbuilder.model.Cooler;
 
 import org.junit.Test;
@@ -23,6 +25,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 @SpringBootTest
 @TestPropertySource(locations = "classpath:test.properties")
 @Sql("/coolerData.sql")
+@Sql("/userData.sql")
 @AutoConfigureMockMvc
 public class TestCoolerController {
 
@@ -60,9 +63,6 @@ public class TestCoolerController {
                                 MockMvcRequestBuilders.get("/cooler/9").accept(MediaType.APPLICATION_JSON_VALUE))
                                 .andReturn();
 
-                System.out.println("\ntestGetCoolerByIdNotFound: " + mvcResult.getResponse().getStatus() + "\n");
-                System.out.println(
-                                "\ntestGetCoolerByIdNotFound: " + mvcResult.getResponse().getContentAsString() + "\n");
                 assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
         }
 
@@ -70,10 +70,19 @@ public class TestCoolerController {
         public void testAddCoolerSuccessfully() throws Exception {
                 Cooler cooler = new Cooler("coolerMaker", "coolerName1", 1, 2, 1, 1, 1);
 
-                MvcResult mvcResult = mockMvc.perform(
-                                MockMvcRequestBuilders.post("/cooler/add").contentType(MediaType.APPLICATION_JSON_VALUE)
-                                                .content(objectMapper.writeValueAsString(cooler)))
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
                                 .andReturn();
+
+                // add cooler
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/cooler/add")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(cooler))).andReturn();
 
                 assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CREATED.value());
 
@@ -83,10 +92,19 @@ public class TestCoolerController {
         public void testAddCoolerDuplicated() throws Exception {
                 Cooler cooler = new Cooler("coolerMaker1", "coolerName2", 2, 2, 2, 2, 2);
 
-                MvcResult mvcResult = mockMvc.perform(
-                                MockMvcRequestBuilders.post("/cooler/add").contentType(MediaType.APPLICATION_JSON_VALUE)
-                                                .content(objectMapper.writeValueAsString(cooler)))
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
                                 .andReturn();
+
+                // add cooler
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/cooler/add")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(cooler))).andReturn();
 
                 assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CONFLICT.value());
         }
@@ -95,10 +113,20 @@ public class TestCoolerController {
         public void testUpdateCoolerSuccesfully() throws Exception {
 
                 Cooler coolerId4 = new Cooler("coolerMaker2", "coolerName4", 2, 1, 3, 2, 2);
-                MvcResult mvcResult = mockMvc
-                                .perform(MockMvcRequestBuilders.put("/cooler/4").contentType(MediaType.APPLICATION_JSON)
-                                                .content(objectMapper.writeValueAsString(coolerId4)))
+
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
                                 .andReturn();
+
+                // update Cooler
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/cooler/4")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(coolerId4))).andReturn();
 
                 assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.OK.value());
         }
@@ -107,32 +135,90 @@ public class TestCoolerController {
         public void testUpdateCoolerDuplicated() throws Exception {
 
                 Cooler coolerId4 = new Cooler("coolerMaker1", "coolerName1", 2, 2, 2, 2, 2);
-                MvcResult mvcResult = mockMvc
-                                .perform(MockMvcRequestBuilders.put("/cooler/4").contentType(MediaType.APPLICATION_JSON)
-                                                .content(objectMapper.writeValueAsString(coolerId4)))
+
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
                                 .andReturn();
+
+                // update cooler
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/cooler/4")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(coolerId4))).andReturn();
 
                 assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CONFLICT.value());
         }
 
         @Test
         public void testUpdateCoolerNotFound() throws Exception {
-                MvcResult mvcResult = mockMvc.perform(
-                                MockMvcRequestBuilders.get("/cooler/8").accept(MediaType.APPLICATION_JSON_VALUE))
+
+                Cooler cooler = new Cooler("asdasd", "aaaadrfgads", 2, 1, 3, 2, 2);
+
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
                                 .andReturn();
+
+                // update Cooler
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/cooler/8")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(cooler))).andReturn();
 
                 assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
         }
 
         @Test
         public void testDeleteCoolerSuccessfully() throws Exception {
-                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/cooler/1")).andReturn();
+
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
+
+                // delete cooler
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/cooler/1").header("Authorization",
+                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                MessageResponse.class).getMessage()))
+                                .andReturn();
                 assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NO_CONTENT.value());
         }
 
         @Test
         public void testDeleteCoolerNotFound() throws Exception {
-                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/cooler/10")).andReturn();
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
+
+                //delete cooler
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/cooler/10")
+                .header("Authorization",
+                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                MessageResponse.class).getMessage())).andReturn();
                 assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
+        }
+
+        @Test
+        public void testGetCoolerListByCpuTdp() throws Exception {
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.get("/cooler/minimum-tdp/70")
+                                .accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+
+                Cooler[] coolerList = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                Cooler[].class);
+
+                assertTrue(coolerList.length == 2 && mvcResult.getResponse().getStatus() == HttpStatus.OK.value());
+                for (Cooler cooler : coolerList) {
+                        assertTrue(cooler.getMaxCpuTDP() >= 70);
+                }
         }
 }

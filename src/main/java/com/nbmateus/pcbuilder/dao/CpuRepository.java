@@ -12,4 +12,7 @@ public interface CpuRepository extends CrudRepository<CPU, Long>{
         
     @Query(value = "SELECT * FROM cpu where cpu.maker = :maker and cpu.name = :name", nativeQuery = true)
     CPU findByMakerAndName(@Param("maker") String maker, @Param("name") String name);
+
+    @Query(value = "SELECT * FROM cpu c where c.maker = :maker", nativeQuery = true)
+    Iterable<CPU> findByMaker(@Param("maker") String maker);
 }

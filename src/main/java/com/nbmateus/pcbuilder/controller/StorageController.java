@@ -8,6 +8,7 @@ import com.nbmateus.pcbuilder.service.StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,6 +42,7 @@ public class StorageController {
         return new ResponseEntity<>(storage, httpStatus);
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping("/add")
     public void addStorage(@RequestBody Storage storage, HttpServletResponse response) {
         try {
@@ -51,6 +53,7 @@ public class StorageController {
         }
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/{id}")
     public void updateStorage(@PathVariable("id") long id, @RequestBody Storage updatedStorage,
             HttpServletResponse response) {
@@ -67,6 +70,7 @@ public class StorageController {
         }
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteStorage(@PathVariable("id") long id, HttpServletResponse response) {
         try {

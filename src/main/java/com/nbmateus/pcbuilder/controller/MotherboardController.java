@@ -2,12 +2,14 @@ package com.nbmateus.pcbuilder.controller;
 
 import javax.servlet.http.HttpServletResponse;
 
+import com.nbmateus.pcbuilder.dto.CpuDto;
 import com.nbmateus.pcbuilder.model.Motherboard;
 import com.nbmateus.pcbuilder.service.MotherboardService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,6 +43,7 @@ public class MotherboardController {
         return new ResponseEntity<Motherboard>(motherboard, httpStatus);
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping("/add")
     public void addMotherboard(@RequestBody Motherboard motherboard, HttpServletResponse response) {
         try {
@@ -51,6 +54,7 @@ public class MotherboardController {
         }
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/{id}")
     public void updateMotherboard(@PathVariable("id") long id, @RequestBody Motherboard updatedMotherboard,
             HttpServletResponse response) {
@@ -66,6 +70,7 @@ public class MotherboardController {
         }
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteMotherboard(@PathVariable("id") long id, HttpServletResponse response) {
         try {
@@ -74,5 +79,10 @@ public class MotherboardController {
         } catch (Exception exception) {
             response.setStatus(HttpStatus.NOT_FOUND.value());
         }
+    }
+
+    @GetMapping("/filtered-by-cpu-specs")
+    public ResponseEntity<Iterable<Motherboard>> getMobo(@RequestBody CpuDto cpuDto) {
+        return new ResponseEntity<Iterable<Motherboard>>(motherboardService.findByCpuSpecs(cpuDto), HttpStatus.OK);
     }
 }

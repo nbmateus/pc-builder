@@ -8,6 +8,7 @@ import com.nbmateus.pcbuilder.service.PsuService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,6 +30,7 @@ public class PsuController {
         return new ResponseEntity<Iterable<PSU>>(psuService.findAll(), HttpStatus.OK);
     }
 
+    
     @GetMapping("/{id}")
     public ResponseEntity<PSU> getPsu(@PathVariable("id") long id) {
         PSU psu = null;
@@ -41,6 +43,7 @@ public class PsuController {
         return new ResponseEntity<PSU>(psu, httpStatus);
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping("/add")
     public void addPsu(@RequestBody PSU psu, HttpServletResponse response) {
         try {
@@ -51,6 +54,7 @@ public class PsuController {
         }
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/{id}")
     public void updatePsu(@PathVariable("id") long id, @RequestBody PSU updatedPsu, HttpServletResponse response) {
         try {
@@ -65,6 +69,7 @@ public class PsuController {
         }
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
     public void deletePsu(@PathVariable("id") long id, HttpServletResponse response) {
         try {

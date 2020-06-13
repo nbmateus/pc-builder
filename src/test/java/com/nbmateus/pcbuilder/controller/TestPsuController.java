@@ -3,6 +3,8 @@ package com.nbmateus.pcbuilder.controller;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nbmateus.pcbuilder.dto.LoginForm;
+import com.nbmateus.pcbuilder.dto.MessageResponse;
 import com.nbmateus.pcbuilder.model.PSU;
 import com.nbmateus.pcbuilder.model.PsuCertification;
 
@@ -24,104 +26,189 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 @SpringBootTest
 @TestPropertySource(locations = "classpath:test.properties")
 @Sql("/psuData.sql")
+@Sql("/userData.sql")
 @AutoConfigureMockMvc
 public class TestPsuController {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @Test
-    public void testGetAll() throws Exception {
-        MvcResult mvcResult = mockMvc
-                .perform(MockMvcRequestBuilders.get("/psu/all").accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+        @Test
+        public void testGetAll() throws Exception {
+                MvcResult mvcResult = mockMvc.perform(
+                                MockMvcRequestBuilders.get("/psu/all").accept(MediaType.APPLICATION_JSON_VALUE))
+                                .andReturn();
 
-        PSU[] psuList = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), PSU[].class);
-        assertTrue(psuList.length > 0 && mvcResult.getResponse().getStatus() == HttpStatus.OK.value());
-    }
+                PSU[] psuList = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), PSU[].class);
+                assertTrue(psuList.length > 0 && mvcResult.getResponse().getStatus() == HttpStatus.OK.value());
+        }
 
-    @Test
-    public void testGetPsuByIdSuccessfully() throws Exception {
-        MvcResult mvcResult = mockMvc
-                .perform(MockMvcRequestBuilders.get("/psu/3").accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+        @Test
+        public void testGetPsuByIdSuccessfully() throws Exception {
+                MvcResult mvcResult = mockMvc
+                                .perform(MockMvcRequestBuilders.get("/psu/3").accept(MediaType.APPLICATION_JSON_VALUE))
+                                .andReturn();
 
-        PSU psuId3 = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), PSU.class);
+                PSU psuId3 = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), PSU.class);
 
-        assertTrue(psuId3.getId() == 3);
-    }
+                assertTrue(psuId3.getId() == 3);
+        }
 
-    @Test
-    public void testGetPsuByIdNotFound() throws Exception {
-        MvcResult mvcResult = mockMvc
-                .perform(MockMvcRequestBuilders.get("/psu/9").accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+        @Test
+        public void testGetPsuByIdNotFound() throws Exception {
+                MvcResult mvcResult = mockMvc
+                                .perform(MockMvcRequestBuilders.get("/psu/9").accept(MediaType.APPLICATION_JSON_VALUE))
+                                .andReturn();
 
-        System.out.println("\ntestGetPsuByIdNotFound: "+mvcResult.getResponse().getStatus()+"\n");
-        System.out.println("\ntestGetPsuByIdNotFound: "+mvcResult.getResponse().getContentAsString()+"\n");
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
-    }
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
+        }
 
-    @Test
-    public void testAddPsuSuccessfully() throws Exception {
-        PSU psu = new PSU("psuMaker1", "psuName5", 1, 1, PsuCertification.GOLD, 1);
+        @Test
+        public void testAddPsuSuccessfully() throws Exception {
+                PSU psu = new PSU("psuMaker1", "psuName5", 1, 1, PsuCertification.GOLD, 1);
 
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/psu/add")
-                .contentType(MediaType.APPLICATION_JSON_VALUE).content(objectMapper.writeValueAsString(psu)))
-                .andReturn();
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CREATED.value());
+                // add psu
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/psu/add")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(psu))).andReturn();
 
-    }
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CREATED.value());
 
-    @Test
-    public void testAddPsuDuplicated() throws Exception {
-        PSU psu = new PSU("psuMaker2", "psuName3", 1, 1, PsuCertification.GOLD, 1);
+        }
 
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/psu/add")
-                .contentType(MediaType.APPLICATION_JSON_VALUE).content(objectMapper.writeValueAsString(psu)))
-                .andReturn();
+        @Test
+        public void testAddPsuDuplicated() throws Exception {
+                PSU psu = new PSU("psuMaker2", "psuName3", 1, 1, PsuCertification.GOLD, 1);
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CONFLICT.value());
-    }
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
 
-    @Test
-    public void testUpdatePsuSuccesfully() throws Exception {
+                // add psu
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/psu/add")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(psu))).andReturn();
 
-        PSU psuId4 = new PSU("psuMaker2", "psuName4", 1, 1, PsuCertification.GOLD, 1);
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/psu/4").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(psuId4))).andReturn();
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CONFLICT.value());
+        }
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.OK.value());
-    }
+        @Test
+        public void testUpdatePsuSuccesfully() throws Exception {
 
-    @Test
-    public void testUpdatePsuDuplicated() throws Exception {
+                PSU psuId4 = new PSU("psuMaker2", "psuName4", 1, 1, PsuCertification.GOLD, 1);
 
-        PSU psuId4 = new PSU("psuMaker1", "psuName2", 1, 1, PsuCertification.GOLD, 1);
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/psu/4").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(psuId4))).andReturn();
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CONFLICT.value());
-    }
+                // update psu
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/psu/4")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE).contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(psuId4))).andReturn();
 
-    @Test
-    public void testUpdatePsuNotFound() throws Exception {
-        MvcResult mvcResult = mockMvc
-                .perform(MockMvcRequestBuilders.get("/psu/8").accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.OK.value());
+        }
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
-    }
+        @Test
+        public void testUpdatePsuDuplicated() throws Exception {
 
-    @Test
-    public void testDeletePsuSuccessfully() throws Exception {
-            MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/psu/1")).andReturn();
-            assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NO_CONTENT.value());
-    }
+                PSU psuId4 = new PSU("psuMaker1", "psuName2", 1, 1, PsuCertification.GOLD, 1);
 
-    @Test
-    public void testDeletePsuNotFound() throws Exception {
-            MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/psu/10")).andReturn();
-            assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
-    }
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
+
+                // update psu
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/psu/4")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE).contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(psuId4))).andReturn();
+
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CONFLICT.value());
+        }
+
+        @Test
+        public void testUpdatePsuNotFound() throws Exception {
+                PSU psu = new PSU("psumak", "psunam", 1, 1, PsuCertification.GOLD, 1);
+
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
+
+                // update psu
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/psu/8")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE).contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(psu))).andReturn();
+
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
+        }
+
+        @Test
+        public void testDeletePsuSuccessfully() throws Exception {
+
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
+
+                // delete psu
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/psu/1")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NO_CONTENT.value());
+        }
+
+        @Test
+        public void testDeletePsuNotFound() throws Exception {
+
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
+
+                // delete psu
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/psu/10")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
+        }
 }

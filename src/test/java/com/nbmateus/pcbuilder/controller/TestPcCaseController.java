@@ -3,6 +3,8 @@ package com.nbmateus.pcbuilder.controller;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nbmateus.pcbuilder.dto.LoginForm;
+import com.nbmateus.pcbuilder.dto.MessageResponse;
 import com.nbmateus.pcbuilder.model.MotherboardSize;
 import com.nbmateus.pcbuilder.model.PcCase;
 
@@ -24,104 +26,185 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 @SpringBootTest
 @TestPropertySource(locations = "classpath:test.properties")
 @Sql("/pc_caseData.sql")
+@Sql("/userData.sql")
 @AutoConfigureMockMvc
 public class TestPcCaseController {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @Test
-    public void testGetAll() throws Exception {
-        MvcResult mvcResult = mockMvc
-                .perform(MockMvcRequestBuilders.get("/pcCase/all").accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+        @Test
+        public void testGetAll() throws Exception {
+                MvcResult mvcResult = mockMvc.perform(
+                                MockMvcRequestBuilders.get("/pcCase/all").accept(MediaType.APPLICATION_JSON_VALUE))
+                                .andReturn();
 
-        PcCase[] pcCaseList = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), PcCase[].class);
-        assertTrue(pcCaseList.length > 0 && mvcResult.getResponse().getStatus() == HttpStatus.OK.value());
-    }
+                PcCase[] pcCaseList = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                PcCase[].class);
+                assertTrue(pcCaseList.length > 0 && mvcResult.getResponse().getStatus() == HttpStatus.OK.value());
+        }
 
-    @Test
-    public void testGetPcCaseByIdSuccessfully() throws Exception {
-        MvcResult mvcResult = mockMvc
-                .perform(MockMvcRequestBuilders.get("/pcCase/3").accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+        @Test
+        public void testGetPcCaseByIdSuccessfully() throws Exception {
+                MvcResult mvcResult = mockMvc.perform(
+                                MockMvcRequestBuilders.get("/pcCase/3").accept(MediaType.APPLICATION_JSON_VALUE))
+                                .andReturn();
 
-        PcCase pcCaseId3 = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), PcCase.class);
+                PcCase pcCaseId3 = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), PcCase.class);
 
-        assertTrue(pcCaseId3.getId() == 3);
-    }
+                assertTrue(pcCaseId3.getId() == 3);
+        }
 
-    @Test
-    public void testGetPcCaseByIdNotFound() throws Exception {
-        MvcResult mvcResult = mockMvc
-                .perform(MockMvcRequestBuilders.get("/pcCase/9").accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+        @Test
+        public void testGetPcCaseByIdNotFound() throws Exception {
+                MvcResult mvcResult = mockMvc.perform(
+                                MockMvcRequestBuilders.get("/pcCase/9").accept(MediaType.APPLICATION_JSON_VALUE))
+                                .andReturn();
 
-        System.out.println("\ntestGetPcCaseByIdNotFound: "+mvcResult.getResponse().getStatus()+"\n");
-        System.out.println("\ntestGetPcCaseByIdNotFound: "+mvcResult.getResponse().getContentAsString()+"\n");
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
-    }
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
+        }
 
-    @Test
-    public void testAddPcCaseSuccessfully() throws Exception {
-        PcCase pcCase = new PcCase("pcCaseMaker2", "pcCaseName5", 1, 1, MotherboardSize.ATX, 1, 1);
+        @Test
+        public void testAddPcCaseSuccessfully() throws Exception {
+                PcCase pcCase = new PcCase("pcCaseMaker2", "pcCaseName5", 1, 1, MotherboardSize.ATX, 1, 1);
 
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/pcCase/add")
-                .contentType(MediaType.APPLICATION_JSON_VALUE).content(objectMapper.writeValueAsString(pcCase)))
-                .andReturn();
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CREATED.value());
+                // add pcCase
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/pcCase/add")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(pcCase))).andReturn();
 
-    }
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CREATED.value());
 
-    @Test
-    public void testAddPcCaseDuplicated() throws Exception {
-        PcCase pcCase = new PcCase("pcCaseMaker1", "pcCaseName1", 1, 1, MotherboardSize.ATX, 1, 1);
+        }
 
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/pcCase/add")
-                .contentType(MediaType.APPLICATION_JSON_VALUE).content(objectMapper.writeValueAsString(pcCase)))
-                .andReturn();
+        @Test
+        public void testAddPcCaseDuplicated() throws Exception {
+                PcCase pcCase = new PcCase("pcCaseMaker1", "pcCaseName1", 1, 1, MotherboardSize.ATX, 1, 1);
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CONFLICT.value());
-    }
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
 
-    @Test
-    public void testUpdatePcCaseSuccesfully() throws Exception {
+                // add pcCase
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/pcCase/add")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(pcCase))).andReturn();
 
-        PcCase pcCaseId4 = new PcCase("pcCaseMaker2", "pcCaseName4", 1, 1, MotherboardSize.ITX, 1, 1);
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/pcCase/4").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(pcCaseId4))).andReturn();
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CONFLICT.value());
+        }
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.OK.value());
-    }
+        @Test
+        public void testUpdatePcCaseSuccesfully() throws Exception {
 
-    @Test
-    public void testUpdatePcCaseDuplicated() throws Exception {
+                PcCase pcCaseId4 = new PcCase("pcCaseMaker2", "pcCaseName4", 1, 1, MotherboardSize.ITX, 1, 1);
 
-        PcCase pcCaseId4 = new PcCase("pcCaseMaker1", "pcCaseName2", 1, 1, MotherboardSize.ITX, 1, 1);
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/pcCase/4").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(pcCaseId4))).andReturn();
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CONFLICT.value());
-    }
+                // update pcCase
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/pcCase/4")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(pcCaseId4))).andReturn();
 
-    @Test
-    public void testUpdatePcCaseNotFound() throws Exception {
-        MvcResult mvcResult = mockMvc
-                .perform(MockMvcRequestBuilders.get("/pcCase/8").accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.OK.value());
+        }
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
-    }
+        @Test
+        public void testUpdatePcCaseDuplicated() throws Exception {
 
-    @Test
-    public void testDeletePcCaseSuccessfully() throws Exception {
-            MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/pcCase/1")).andReturn();
-            assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NO_CONTENT.value());
-    }
+                PcCase pcCaseId4 = new PcCase("pcCaseMaker1", "pcCaseName2", 1, 1, MotherboardSize.ITX, 1, 1);
 
-    @Test
-    public void testDeletePcCaseNotFound() throws Exception {
-            MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/pcCase/10")).andReturn();
-            assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
-    }
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
+
+                // update pcCase
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/pcCase/4")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(pcCaseId4))).andReturn();
+
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CONFLICT.value());
+        }
+
+        @Test
+        public void testUpdatePcCaseNotFound() throws Exception {
+                PcCase pcCase = new PcCase("pcCaseMakerr", "pcCasenamee", 1, 1, MotherboardSize.ITX, 1, 1);
+
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
+
+                // update pcCase
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/pcCase/8")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(pcCase))).andReturn();
+
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
+        }
+
+        @Test
+        public void testDeletePcCaseSuccessfully() throws Exception {
+
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
+
+                // delete pcCase
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/pcCase/1").header("Authorization",
+                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                MessageResponse.class).getMessage()))
+                                .andReturn();
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NO_CONTENT.value());
+        }
+
+        @Test
+        public void testDeletePcCaseNotFound() throws Exception {
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
+
+                // delete pcCase
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/pcCase/10").header("Authorization",
+                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                MessageResponse.class).getMessage()))
+                                .andReturn();
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
+        }
 }

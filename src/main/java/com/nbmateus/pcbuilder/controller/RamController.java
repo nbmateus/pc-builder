@@ -2,12 +2,14 @@ package com.nbmateus.pcbuilder.controller;
 
 import javax.servlet.http.HttpServletResponse;
 
+import com.nbmateus.pcbuilder.dto.MotherboardDto;
 import com.nbmateus.pcbuilder.model.RAM;
 import com.nbmateus.pcbuilder.service.RamService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,6 +43,7 @@ public class RamController {
         return new ResponseEntity<RAM>(ram, httpStatus);
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping("/add")
     public void addRam(@RequestBody RAM ram, HttpServletResponse response) {
         try {
@@ -51,6 +54,7 @@ public class RamController {
         }
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/{id}")
     public void updateRam(@PathVariable("id") long id, @RequestBody RAM updatedRam, HttpServletResponse response) {
         try {
@@ -65,6 +69,7 @@ public class RamController {
         }
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteRam(@PathVariable("id") long id, HttpServletResponse response) {
         try {
@@ -73,5 +78,10 @@ public class RamController {
         } catch (Exception exception) {
             response.setStatus(HttpStatus.NOT_FOUND.value());
         }
+    }
+
+    @GetMapping("/filter-by-motherboard-specs")
+    public ResponseEntity<Iterable<RAM>> findByMotherboardSpecs(@RequestBody MotherboardDto motherboardDto) {
+        return new ResponseEntity<Iterable<RAM>>(ramService.findByMotherboardSpecs(motherboardDto), HttpStatus.OK);
     }
 }

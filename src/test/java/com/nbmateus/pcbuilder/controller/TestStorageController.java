@@ -3,6 +3,8 @@ package com.nbmateus.pcbuilder.controller;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nbmateus.pcbuilder.dto.LoginForm;
+import com.nbmateus.pcbuilder.dto.MessageResponse;
 import com.nbmateus.pcbuilder.model.Storage;
 import com.nbmateus.pcbuilder.model.StorageType;
 
@@ -24,104 +26,189 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 @SpringBootTest
 @TestPropertySource(locations = "classpath:test.properties")
 @Sql("/storageData.sql")
+@Sql("/userData.sql")
 @AutoConfigureMockMvc
 public class TestStorageController {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @Test
-    public void testGetAll() throws Exception {
-        MvcResult mvcResult = mockMvc
-                .perform(MockMvcRequestBuilders.get("/storage/all").accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+        @Test
+        public void testGetAll() throws Exception {
+                MvcResult mvcResult = mockMvc.perform(
+                                MockMvcRequestBuilders.get("/storage/all").accept(MediaType.APPLICATION_JSON_VALUE))
+                                .andReturn();
 
-        Storage[] storageList = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), Storage[].class);
-        assertTrue(storageList.length > 0 && mvcResult.getResponse().getStatus() == HttpStatus.OK.value());
-    }
+                Storage[] storageList = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                Storage[].class);
+                assertTrue(storageList.length > 0 && mvcResult.getResponse().getStatus() == HttpStatus.OK.value());
+        }
 
-    @Test
-    public void testGetStorageByIdSuccessfully() throws Exception {
-        MvcResult mvcResult = mockMvc
-                .perform(MockMvcRequestBuilders.get("/storage/3").accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+        @Test
+        public void testGetStorageByIdSuccessfully() throws Exception {
+                MvcResult mvcResult = mockMvc.perform(
+                                MockMvcRequestBuilders.get("/storage/3").accept(MediaType.APPLICATION_JSON_VALUE))
+                                .andReturn();
 
-        Storage storageId3 = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), Storage.class);
+                Storage storageId3 = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                Storage.class);
 
-        assertTrue(storageId3.getId() == 3);
-    }
+                assertTrue(storageId3.getId() == 3);
+        }
 
-    @Test
-    public void testGetStorageByIdNotFound() throws Exception {
-        MvcResult mvcResult = mockMvc
-                .perform(MockMvcRequestBuilders.get("/storage/9").accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+        @Test
+        public void testGetStorageByIdNotFound() throws Exception {
+                MvcResult mvcResult = mockMvc.perform(
+                                MockMvcRequestBuilders.get("/storage/9").accept(MediaType.APPLICATION_JSON_VALUE))
+                                .andReturn();
 
-        System.out.println("\ntestGetStorageByIdNotFound: "+mvcResult.getResponse().getStatus()+"\n");
-        System.out.println("\ntestGetStorageByIdNotFound: "+mvcResult.getResponse().getContentAsString()+"\n");
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
-    }
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
+        }
 
-    @Test
-    public void testAddStorageSuccessfully() throws Exception {
-        Storage storage = new Storage("storageMaker2", "storageName5", 1, 1, StorageType.M2, 500, 300, "1TB");
+        @Test
+        public void testAddStorageSuccessfully() throws Exception {
+                Storage storage = new Storage("storageMaker2", "storageName5", 1, 1, StorageType.M2, 500, 300, "1TB");
 
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/storage/add")
-                .contentType(MediaType.APPLICATION_JSON_VALUE).content(objectMapper.writeValueAsString(storage)))
-                .andReturn();
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CREATED.value());
+                // add storage
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/storage/add")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(storage))).andReturn();
 
-    }
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CREATED.value());
+        }
 
-    @Test
-    public void testAddStorageDuplicated() throws Exception {
-        Storage storage = new Storage("storageMaker1", "storageName1", 1, 1, StorageType.M2, 500, 300, "1TB");
+        @Test
+        public void testAddStorageDuplicated() throws Exception {
+                Storage storage = new Storage("storageMaker1", "storageName1", 1, 1, StorageType.M2, 500, 300, "1TB");
 
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/storage/add")
-                .contentType(MediaType.APPLICATION_JSON_VALUE).content(objectMapper.writeValueAsString(storage)))
-                .andReturn();
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CONFLICT.value());
-    }
+                // add storage
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/storage/add")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(storage))).andReturn();
 
-    @Test
-    public void testUpdateStorageSuccesfully() throws Exception {
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CONFLICT.value());
+        }
 
-        Storage storageId4 = new Storage("storageMaker2", "storageName4", 1, 1, StorageType.M2, 500, 300, "1TB");
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/storage/4").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(storageId4))).andReturn();
+        @Test
+        public void testUpdateStorageSuccesfully() throws Exception {
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.OK.value());
-    }
+                Storage storageId4 = new Storage("storageMaker2", "storageName4", 1, 1, StorageType.M2, 500, 300,
+                                "1TB");
 
-    @Test
-    public void testUpdateStorageDuplicated() throws Exception {
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
 
-        Storage storageId4 = new Storage("storageMaker2", "storageName3", 1, 1, StorageType.M2, 500, 300, "1TB");
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/storage/4").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(storageId4))).andReturn();
+                // update storage
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/storage/4")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(storageId4))).andReturn();
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CONFLICT.value());
-    }
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.OK.value());
+        }
 
-    @Test
-    public void testUpdateStorageNotFound() throws Exception {
-        MvcResult mvcResult = mockMvc
-                .perform(MockMvcRequestBuilders.get("/storage/8").accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
+        @Test
+        public void testUpdateStorageDuplicated() throws Exception {
 
-        assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
-    }
+                Storage storageId4 = new Storage("storageMaker2", "storageName3", 1, 1, StorageType.M2, 500, 300,
+                                "1TB");
 
-    @Test
-    public void testDeleteStorageSuccessfully() throws Exception {
-            MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/storage/1")).andReturn();
-            assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NO_CONTENT.value());
-    }
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
 
-    @Test
-    public void testDeleteStorageNotFound() throws Exception {
-            MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/storage/10")).andReturn();
-            assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
-    }
+                // update storage
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/storage/4")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(storageId4))).andReturn();
+
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.CONFLICT.value());
+        }
+
+        @Test
+        public void testUpdateStorageNotFound() throws Exception {
+
+                Storage storage = new Storage("storagemaker", "storagenae", 1, 1, StorageType.M2, 500, 300, "1TB");
+
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
+
+                // update storage
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/storage/8")
+                                .header("Authorization",
+                                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                                MessageResponse.class).getMessage())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(storage))).andReturn();
+
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
+        }
+
+        @Test
+        public void testDeleteStorageSuccessfully() throws Exception {
+
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
+
+                // delete storage
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/storage/1").header("Authorization",
+                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                MessageResponse.class).getMessage()))
+                                .andReturn();
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NO_CONTENT.value());
+        }
+
+        @Test
+        public void testDeleteStorageNotFound() throws Exception {
+
+                // login as admin
+                MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(new LoginForm("admin", "adminpass1"))))
+                                .andReturn();
+
+                // delete storage
+                mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/storage/10").header("Authorization",
+                                objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                                                MessageResponse.class).getMessage()))
+                                .andReturn();
+                assertTrue(mvcResult.getResponse().getStatus() == HttpStatus.NOT_FOUND.value());
+        }
 }

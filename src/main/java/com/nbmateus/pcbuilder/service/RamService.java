@@ -3,6 +3,7 @@ package com.nbmateus.pcbuilder.service;
 import java.util.Optional;
 
 import com.nbmateus.pcbuilder.dao.RamRepository;
+import com.nbmateus.pcbuilder.dto.MotherboardDto;
 import com.nbmateus.pcbuilder.model.RAM;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,5 +70,9 @@ public class RamService {
             throw new Exception("RAM does not exist.");
         }
         ramRepository.delete(ramData.get());
+    }
+
+    public Iterable<RAM> findByMotherboardSpecs(MotherboardDto motherboardDto){
+        return ramRepository.findByMotherboardSpecs(motherboardDto.getRamType().name(), motherboardDto.getMaxRamSpeed());
     }
 }

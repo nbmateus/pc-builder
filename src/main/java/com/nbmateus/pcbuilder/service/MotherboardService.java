@@ -3,6 +3,7 @@ package com.nbmateus.pcbuilder.service;
 import java.util.Optional;
 
 import com.nbmateus.pcbuilder.dao.MotherboardRepository;
+import com.nbmateus.pcbuilder.dto.CpuDto;
 import com.nbmateus.pcbuilder.model.Motherboard;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,7 @@ public class MotherboardService {
 
     public Motherboard findById(long id) throws Exception {
         Optional<Motherboard> motherboardData = motherboardRepository.findById(id);
-        if(!motherboardData.isPresent()){
+        if (!motherboardData.isPresent()) {
             throw new Exception("Motherboard does not exist.");
         }
         return motherboardData.get();
@@ -34,7 +35,7 @@ public class MotherboardService {
     }
 
     public Motherboard addMotherboard(Motherboard motherboard) throws Exception {
-        if(findByMakerAndName(motherboard.getMaker(), motherboard.getName()) != null){
+        if (findByMakerAndName(motherboard.getMaker(), motherboard.getName()) != null) {
             throw new Exception("Motherboard duplicated.");
         }
         return motherboardRepository.save(motherboard);
@@ -42,11 +43,12 @@ public class MotherboardService {
 
     public Motherboard updateMotherboard(long id, Motherboard updatedMotherboard) throws Exception {
         Optional<Motherboard> motherboardData = motherboardRepository.findById(id);
-        Motherboard existingMotherboard = findByMakerAndName(updatedMotherboard.getMaker(), updatedMotherboard.getName());
-        if(!motherboardData.isPresent()){
+        Motherboard existingMotherboard = findByMakerAndName(updatedMotherboard.getMaker(),
+                updatedMotherboard.getName());
+        if (!motherboardData.isPresent()) {
             throw new Exception("Motherboard does not exist.");
         }
-        if (existingMotherboard != null && existingMotherboard.getId() != id){
+        if (existingMotherboard != null && existingMotherboard.getId() != id) {
             throw new Exception("Motherboard duplicated.");
         }
 
@@ -68,9 +70,19 @@ public class MotherboardService {
 
     public void delete(long id) throws Exception {
         Optional<Motherboard> motherboardData = motherboardRepository.findById(id);
-        if(!motherboardData.isPresent()){
+        if (!motherboardData.isPresent()) {
             throw new Exception("Motherboard does not exist.");
         }
         motherboardRepository.delete(motherboardData.get());
+    }
+
+    public Iterable<Motherboard> findByCpuSpecs(CpuDto cpuDto) {
+        Iterable<Motherboard> motherboardList;
+        if(cpuDto.isUnlockedMultiplier()){
+            motherboardList = motherboardRepository.findBySocketAndOverclockAllowed(cpuDto.getSocket().name(), cpuDto.isUnlockedMultiplier());
+        }else {
+            motherboardList = motherboardRepository.findBySocket(cpuDto.getSocket().name());
+        }
+        return motherboardList;
     }
 }

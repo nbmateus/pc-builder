@@ -8,6 +8,7 @@ import com.nbmateus.pcbuilder.service.CoolerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 
 @RestController
 @RequestMapping("/cooler")
@@ -41,6 +43,7 @@ public class CoolerController {
         return new ResponseEntity<Cooler>(cooler, httpStatus);
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping("/add")
     public void addCooler(@RequestBody Cooler cooler, HttpServletResponse response) {
         try {
@@ -51,6 +54,7 @@ public class CoolerController {
         }
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/{id}")
     public void updateCooler(@PathVariable("id") long id, @RequestBody Cooler updatedCooler,
             HttpServletResponse response) {
@@ -66,6 +70,7 @@ public class CoolerController {
         }
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteCooler(@PathVariable("id") long id, HttpServletResponse response) {
         try {
@@ -75,5 +80,11 @@ public class CoolerController {
             response.setStatus(HttpStatus.NOT_FOUND.value());
         }
     }
+
+    @GetMapping(value="/minimum-tdp/{cpuTdp}")
+    public ResponseEntity<Iterable<Cooler>> findByCpuTdp(@PathVariable("cpuTdp") int cpuTdp) {
+        return new ResponseEntity<Iterable<Cooler>>(coolerService.findByCpuTdp(cpuTdp), HttpStatus.OK);
+    }
+    
 
 }

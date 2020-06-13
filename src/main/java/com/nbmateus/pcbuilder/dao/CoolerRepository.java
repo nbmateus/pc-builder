@@ -12,4 +12,7 @@ public interface CoolerRepository extends CrudRepository<Cooler, Long>{
     
     @Query(value = "SELECT * FROM cooler where cooler.maker = :maker and cooler.name = :name", nativeQuery = true)
     Cooler findByMakerAndName(@Param("maker") String maker, @Param("name") String name);
+
+    @Query(value = "SELECT * FROM cooler c where c.max_cputdp >= :cpuTdp", nativeQuery = true)
+    public Iterable<Cooler> findByCpuTdp(@Param("cpuTdp") int cpuTdp);
 }
